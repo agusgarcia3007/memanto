@@ -4997,7 +4997,8 @@
                 "items": {
                   "type": "string",
                   "maxLength": 64,
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^[^,\\x00-\\x1f\\x7f\\x85\\u2028\\u2029]+$"
                 },
                 "type": "array",
                 "maxItems": 20
@@ -5474,7 +5475,8 @@
                 "items": {
                   "type": "string",
                   "maxLength": 64,
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^[^,\\x00-\\x1f\\x7f\\x85\\u2028\\u2029]+$"
                 },
                 "type": "array",
                 "maxItems": 20
@@ -6329,7 +6331,8 @@
                 "items": {
                   "type": "string",
                   "maxLength": 64,
-                  "minLength": 1
+                  "minLength": 1,
+                  "pattern": "^[^,\\x00-\\x1f\\x7f\\x85\\u2028\\u2029]+$"
                 },
                 "type": "array",
                 "maxItems": 20

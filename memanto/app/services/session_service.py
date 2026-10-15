@@ -675,14 +675,16 @@ class SessionService:
             return None
 
         try:
-            agent_lock = self._lock_for_agent(token.agent_id)
+            validate_safe_id(token.agent_id, "agent_id")
         except ValueError:
             # A token we signed but whose agent_id is no longer a safe id.
             # Leave it to normal validation to reject rather than raising an
             # unhandled 500 out of the auth dependency.
             return None
 
-        with agent_lock:
+        # Hold the same cross-process lifecycle lock as logout until the
+        # expired-session check AND replacement publication both finish.
+        with self.lock_agent_lifecycle(token.agent_id):
             session = self.get_session(token.agent_id)
             if not session or session.session_id != token.session_id:
                 # Unknown agent, or the persisted record was replaced by a

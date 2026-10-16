@@ -3440,9 +3440,6 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // Backward-compatible alias for escHtml
-        const attrEsc = escHtml;
-
         // Navigation
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -4610,7 +4607,7 @@
                     statusBadge = '<span class="badge badge-success">active</span>';
                 }
                 const provBadge = m.provenance ? `<span class="badge badge-accent">${escHtml(m.provenance)}</span>` : '—';
-                const mJson = attrEsc(JSON.stringify(m));
+                const mJson = escHtml(JSON.stringify(m));
                 const caret = expandable
                     ? '<svg class="row-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 6 15 12 9 18" /></svg>'
                     : '';
@@ -4633,10 +4630,10 @@
                     // to Edit rather than beside the destructive Forget button.
                     const isExpired = m.status === 'expired';
                     const lifecycleBtn = memId
-                        ? `<button class="btn btn-secondary btn-sm" style="margin-right: 8px;" data-memory-id="${attrEsc(memId)}" onclick="setMemoryLifecycle(this.dataset.memoryId, ${isExpired ? 'false' : 'true'}, this, event)">${isExpired ? 'Restore' : 'Mark expired'}</button>`
+                        ? `<button class="btn btn-secondary btn-sm" style="margin-right: 8px;" data-memory-id="${escHtml(memId)}" onclick="setMemoryLifecycle(this.dataset.memoryId, ${isExpired ? 'false' : 'true'}, this, event)">${isExpired ? 'Restore' : 'Mark expired'}</button>`
                         : '';
                     const forgetBtn = memId
-                        ? `<button class="btn btn-danger btn-sm" data-memory-id="${attrEsc(memId)}" onclick="forgetMemory(this.dataset.memoryId, this, event)">Forget</button>`
+                        ? `<button class="btn btn-danger btn-sm" data-memory-id="${escHtml(memId)}" onclick="forgetMemory(this.dataset.memoryId, this, event)">Forget</button>`
                         : '<span style="font-size:11px;color:var(--text-dim)">No ID — cannot forget</span>';
                     html += `<tr class="expand-row"><td colspan="8"><div class="expand-content">${escHtml(m.content || m.text || 'No content')}\n\nID: ${escHtml(memId || '—')}\nScore: ${escHtml(String(m.score ?? '—'))}\nSource: ${escHtml(m.source || '—')}\nUpdated: ${escHtml(fmtDate(m.updated_at))}${isExpired ? `\nExpired: ${escHtml(fmtDate(m.expired_at))} (${escHtml(m.expired_by || 'unknown')})` : ''}</div><div style="padding:8px 16px;display:flex;justify-content:flex-end">${editBtn}${lifecycleBtn}${forgetBtn}</div></td></tr>`;
                 }
@@ -4734,7 +4731,7 @@
                 </div>
                 <div class="form-group">
                     <label>Title</label>
-                    <input id="editMemTitle" type="text" value="${attrEsc(m.title || '')}">
+                    <input id="editMemTitle" type="text" value="${escHtml(m.title || '')}">
                 </div>
                 <div class="form-group">
                     <label>Content</label>
@@ -4752,11 +4749,11 @@
                 </div>
                 <div class="form-group">
                     <label>Tags (comma-separated)</label>
-                    <input id="editMemTags" type="text" value="${attrEsc(tagsStr)}">
+                    <input id="editMemTags" type="text" value="${escHtml(tagsStr)}">
                 </div>
                 <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
                     <button class="btn btn-secondary" onclick="closeEditMemoryModal()">Cancel</button>
-                    <button class="btn btn-primary" data-mem-id="${attrEsc(String(m.id || ''))}" onclick="executeEditMemory(this.dataset.memId, this)">Save Changes</button>
+                    <button class="btn btn-primary" data-mem-id="${escHtml(String(m.id || ''))}" onclick="executeEditMemory(this.dataset.memId, this)">Save Changes</button>
                 </div>
             </div>`;
             modal.addEventListener('click', e => { if (e.target === modal) closeEditMemoryModal(); });
@@ -5192,7 +5189,7 @@
                     tags.forEach(tg => meta.push(`<span class="hh-tl-tag">${escHtml(tg)}</span>`));
                     html += `<div class="hh-tl-item" onclick="this.classList.toggle('expanded')">
                         <div class="hh-tl-row">
-                            <span class="hh-tl-hash" title="${attrEsc(m.id || '')}">${escHtml(shortId)}</span>
+                            <span class="hh-tl-hash" title="${escHtml(m.id || '')}">${escHtml(shortId)}</span>
                             <span class="hh-tl-title">${escHtml(m.title || 'Untitled')}</span>
                         </div>
                         <div class="hh-tl-meta">
@@ -5979,30 +5976,30 @@
             const purgeParts = purgeToParts(p.purge_expired_after);
 
             const presetOpts = (S.policyPresets || [])
-                .map(x => `<option value="${attrEsc(x.name)}">${escHtml(x.name)} — ${escHtml(x.description)}</option>`)
+                .map(x => `<option value="${escHtml(x.name)}">${escHtml(x.name)} — ${escHtml(x.description)}</option>`)
                 .join('');
 
             const retentionRows = MEMORY_TYPES.map(t => {
                 const val = p.retention[t] || '';
                 return `<tr>
                     <td style="color:var(--text-primary)">${escHtml(t)}</td>
-                    <td><input value="${attrEsc(val)}" placeholder="never" style="width:110px;font-family:var(--font-mono);font-size:12px" onchange="updateRetention('${t}', this.value)"></td>
+                    <td><input value="${escHtml(val)}" placeholder="never" style="width:110px;font-family:var(--font-mono);font-size:12px" onchange="updateRetention('${t}', this.value)"></td>
                 </tr>`;
             }).join('');
 
             const ruleCards = p.rules.map((r, i) => `
                 <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
                     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-                        <input value="${attrEsc(r.name)}" placeholder="rule-name" style="flex:1;font-family:var(--font-mono);font-size:12px" onchange="updateRule(${i}, 'name', this.value)">
-                        <input value="${attrEsc(r.expire_after)}" placeholder="never" style="width:110px;font-family:var(--font-mono);font-size:12px" onchange="updateRule(${i}, 'expire_after', this.value)">
+                        <input value="${escHtml(r.name)}" placeholder="rule-name" style="flex:1;font-family:var(--font-mono);font-size:12px" onchange="updateRule(${i}, 'name', this.value)">
+                        <input value="${escHtml(r.expire_after)}" placeholder="never" style="width:110px;font-family:var(--font-mono);font-size:12px" onchange="updateRule(${i}, 'expire_after', this.value)">
                         <button class="btn btn-danger btn-sm" onclick="removeRule(${i})">Remove</button>
                     </div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
-                        <input value="${attrEsc((r.match.type || []).join(', '))}" placeholder="type (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'type', this.value)">
-                        <input value="${attrEsc((r.match.tags || []).join(', '))}" placeholder="tags (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'tags', this.value)">
-                        <input value="${attrEsc((r.match.source || []).join(', '))}" placeholder="source (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'source', this.value)">
-                        <input value="${attrEsc((r.match.provenance || []).join(', '))}" placeholder="provenance (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'provenance', this.value)">
-                        <input value="${attrEsc(r.match.confidence_below ?? '')}" placeholder="confidence below" style="font-size:12px" onchange="updateMatch(${i}, 'confidence_below', this.value)">
+                        <input value="${escHtml((r.match.type || []).join(', '))}" placeholder="type (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'type', this.value)">
+                        <input value="${escHtml((r.match.tags || []).join(', '))}" placeholder="tags (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'tags', this.value)">
+                        <input value="${escHtml((r.match.source || []).join(', '))}" placeholder="source (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'source', this.value)">
+                        <input value="${escHtml((r.match.provenance || []).join(', '))}" placeholder="provenance (comma sep)" style="font-size:12px" onchange="updateMatch(${i}, 'provenance', this.value)">
+                        <input value="${escHtml(r.match.confidence_below ?? '')}" placeholder="confidence below" style="font-size:12px" onchange="updateMatch(${i}, 'confidence_below', this.value)">
                     </div>
                 </div>`).join('');
 
@@ -7568,8 +7565,8 @@
                             <div class="conn-project-path">${escHtml(p.path)}${missingTag}</div>
                         </div>
                         <button class="btn btn-sm btn-secondary"
-                                data-connection-name="${attrEsc(conn.name)}"
-                                data-project-path="${attrEsc(p.path)}"
+                                data-connection-name="${escHtml(conn.name)}"
+                                data-project-path="${escHtml(p.path)}"
                                 onclick="confirmDisconnect(this.dataset.connectionName, this.dataset.projectPath, false, this)">${btnLabel}</button>
                     </div>`;
                 }).join('');
@@ -7578,7 +7575,7 @@
             const globalHtml = conn.installed_global
                 ? `<div class="conn-project-row">
                     <div class="conn-project-path">✓ Installed at ${escHtml(conn.skill_global_path)}</div>
-                    <button class="btn btn-sm btn-danger" data-connection-name="${attrEsc(conn.name)}" onclick="confirmDisconnect(this.dataset.connectionName, null, true, this)">Remove Global</button>
+                    <button class="btn btn-sm btn-danger" data-connection-name="${escHtml(conn.name)}" onclick="confirmDisconnect(this.dataset.connectionName, null, true, this)">Remove Global</button>
                 </div>`
                 : `<p style="color:var(--text-dim);font-size:13px;padding:10px 0">Not installed globally.
                     <a href="#" onclick="openConnectModalGlobal('${escHtml(conn.name)}');return false" style="color:var(--accent);text-decoration:none;margin-left:6px">Install globally →</a></p>`;
@@ -7665,7 +7662,7 @@
                 </div>
                 <div class="form-group">
                     <label>Project Directory</label>
-                    <input id="connectPathInput" type="text" placeholder="${attrEsc(placeholder)}" value="${attrEsc(placeholder)}"
+                    <input id="connectPathInput" type="text" placeholder="${escHtml(placeholder)}" value="${escHtml(placeholder)}"
                         onkeydown="if(event.key==='Enter'){event.preventDefault(); browseTo(this.value)}">
                     <div class="helper-text">Type or paste a path, or use the browser below. Hit Enter to navigate there.</div>
                     <div id="folderBrowser" class="browser">
@@ -7730,20 +7727,20 @@
                 if (i === 0 && isWin) acc = p + sep;
                 else if (acc.endsWith(sep)) acc = acc + p;
                 else acc = acc + sep + p;
-                return `<a class="browser-crumb" data-browse-path="${attrEsc(acc)}">${escHtml(p)}</a>`;
+                return `<a class="browser-crumb" data-browse-path="${escHtml(acc)}">${escHtml(p)}</a>`;
             }).join(`<span class="browser-crumb-sep">${escHtml(sep)}</span>`);
 
             const quickHtml = (data.quick_paths || []).map(q =>
-                `<button class="browser-quick-btn" data-browse-path="${attrEsc(q.path)}">${escHtml(q.label)}</button>`
+                `<button class="browser-quick-btn" data-browse-path="${escHtml(q.path)}">${escHtml(q.label)}</button>`
             ).join('');
 
             const upHtml = data.parent
-                ? `<button class="browser-up" data-browse-path="${attrEsc(data.parent)}">↑ Up</button>`
+                ? `<button class="browser-up" data-browse-path="${escHtml(data.parent)}">↑ Up</button>`
                 : `<button class="browser-up" disabled>↑ Up</button>`;
 
             const list = (data.children && data.children.length)
                 ? data.children.map(c =>
-                    `<div class="browser-list-item" data-browse-path="${attrEsc(c.path)}">
+                    `<div class="browser-list-item" data-browse-path="${escHtml(c.path)}">
                         <span class="folder-ico">📁</span>
                         <span>${escHtml(c.name)}</span>
                     </div>`

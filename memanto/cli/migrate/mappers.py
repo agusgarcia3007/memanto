@@ -39,7 +39,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from memanto.app.constants import VALID_MEMORY_TYPES, VALID_PROVENANCE_TYPES
-from memanto.app.core import TAG_PATTERN
+from memanto.app.core import TAG_PATTERN, INJECTION_PATTERNS
 
 # Mem0 ships category labels per memory. Map the common ones to Memanto's
 # typed primitives; everything else falls through to None (auto-classify).
@@ -65,6 +65,9 @@ _MAX_FOOTER_CHARS = 800  # cap supporting-data footer so it never dominates
 _MAX_TAGS = 20  # MemoryRecord.tags max_length
 _MAX_TAG_CHARS = 64  # MemoryTag max_length
 _TAG_RE = re.compile(TAG_PATTERN)
+_INJECTION_TAG_PATTERNS = tuple(
+    re.compile(pattern, re.IGNORECASE) for pattern in INJECTION_PATTERNS
+)
 
 
 def _bounded_tags(tags: list[str]) -> tuple[list[str], list[str]]:
@@ -84,6 +87,10 @@ def _bounded_tags(tags: list[str]) -> tuple[list[str], list[str]]:
         if (
             len(text) > _MAX_TAG_CHARS
             or not _TAG_RE.match(text)
+            or text.startswith("#")
+            or any(
+                pattern.search(text) for pattern in _INJECTION_TAG_PATTERNS
+            )
             or len(kept) >= _MAX_TAGS
         ):
             extra.append(text)

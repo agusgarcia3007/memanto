@@ -124,7 +124,7 @@ class SessionService:
                 lock_path = self.sessions_dir / f".{agent_id}.lifecycle.lock"
                 lock = FileLock(
                     str(lock_path),
-                    timeout=5,
+                    timeout=-1,
                     mode=self._PRIVATE_FILE_MODE,
                 )
                 self._agent_file_locks[agent_id] = lock

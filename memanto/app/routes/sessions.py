@@ -64,10 +64,33 @@ def _delete_agent_locally(agent_id: str) -> None:
         session_service.delete_session(agent_id)
 
 
+def _revoke_orphaned_session(agent_id: str) -> None:
+    """Delete a session if its activation was cancelled before returning."""
+    session_service = get_session_service()
+    with session_service.lock_agent_lifecycle(agent_id):
+        session_service.delete_session(agent_id)
+
+
 def _activate_agent_locked(agent_id: str, duration_hours: int) -> Session:
     """Create a session only while its agent still exists under the lock."""
     session_service = get_session_service()
     with session_service.lock_agent_lifecycle(agent_id):
+        # Prevent session hijack: reject re-activation while a valid session is
+        # already live. An attacker who knows an agent_id could otherwise call
+        # activate at any time to steal the session and lock out the real holder.
+        # Callers must deactivate the existing session before creating a new one.
+        existing = session_service.get_session(agent_id)
+        if existing and existing.is_active():
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Agent '{agent_id}' already has an active session. "
+                    "Deactivate it first before re-activating."
+                ),
+            )
+
         agent = agent_service.get_agent(agent_id)
         if not agent:
             raise AgentNotFoundError(f"Agent '{agent_id}' not found")
@@ -284,30 +307,33 @@ async def activate_agent(
 
     Returns session token for use in memory operations.
     """
-    # Prevent session hijack: reject re-activation while a valid session is
-    # already live.  An attacker who knows an agent_id could otherwise call
-    # activate at any time to steal the session and lock out the real holder.
-    # Callers must deactivate the existing session before creating a new one.
-    existing = get_session_service().get_session(agent_id)
-    if existing and existing.is_active():
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                f"Agent '{agent_id}' already has an active session. "
-                "Deactivate it first before re-activating."
-            ),
-        )
-
     # Session duration is controlled by server defaults.
     duration_hours = settings.SESSION_DEFAULT_DURATION_HOURS
 
+    task = asyncio.create_task(
+        asyncio.to_thread(_activate_agent_locked, agent_id, duration_hours)
+    )
+
     try:
-        session = await asyncio.to_thread(
-            _activate_agent_locked, agent_id, duration_hours
-        )
+        session = await task
         set_session_cookie(response, session.session_token, request)
         return session
+    except asyncio.CancelledError:
 
+        async def _cleanup_cancelled_activation():
+            try:
+                session = await task
+                if session:
+                    await asyncio.to_thread(_revoke_orphaned_session, agent_id)
+            except Exception:
+                # If the underlying task failed rather than returning a session,
+                # or if the revocation itself fails, there is nothing more to do.
+                # Suppress the error so it doesn't crash the background event loop.
+                pass
+
+        # Ensure cleanup runs even if the parent request is gone
+        asyncio.shield(asyncio.create_task(_cleanup_cancelled_activation()))
+        raise
     except Exception as e:
         raise map_error_to_http_exception(e)
 

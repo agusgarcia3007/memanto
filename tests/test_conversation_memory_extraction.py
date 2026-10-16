@@ -336,4 +336,3 @@ def test_client_extract_with_nothing_to_store_raises_without_writing(
             assert preview["candidates"] == [] and preview["count"] == 0
 
     batch_remember.assert_not_called()
-

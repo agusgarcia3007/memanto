@@ -5423,11 +5423,24 @@
         async function saveApiKey() {
             const newKey = document.getElementById('newApiKeyInput').value.trim();
             if (!newKey) { toast('API key cannot be empty', 'error'); return; }
+            
+            // Check if there is an existing key (indicated by the preview)
+            const previewEl = document.getElementById('apiKeyPreview');
+            let currentKey = "";
+            if (previewEl && previewEl.textContent && previewEl.textContent !== 'Not set') {
+                currentKey = prompt('Please enter your CURRENT API key to authorize the change:');
+                if (currentKey === null) {
+                    return; // user cancelled
+                }
+                currentKey = currentKey.trim();
+            }
+            
             try {
-                await api('PUT', '/api/ui/api-key', { api_key: newKey });
+                await api('PUT', '/api/ui/api-key', { api_key: newKey, current_key: currentKey });
                 toast('API key updated successfully!');
                 S.config = await api('GET', '/api/ui/config');
                 loadConfig();
+                document.getElementById('newApiKeyInput').value = '';
             } catch (e) { toast('Failed to save API key: ' + e.message, 'error'); }
         }
 

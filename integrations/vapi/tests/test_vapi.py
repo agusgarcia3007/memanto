@@ -1,8 +1,6 @@
 import asyncio
 import json
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import pytest

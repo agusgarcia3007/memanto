@@ -46,7 +46,7 @@ from memanto.app.routes.auth_deps import (
 from memanto.app.services.session_service import get_session_service
 from memanto.app.utils.errors import MemoryOperationError, redact_sensitive_text
 from memanto.app.utils.temporal_helpers import utc_date_str
-from memanto.app.utils.validation import validate_output_path, validate_safe_id
+from memanto.app.utils.validation import validate_safe_id
 from memanto.cli.client.direct_client import DirectClient
 from memanto.cli.config.manager import ConfigManager, _validate_server_port
 from memanto.cli.connect.agent_registry import AGENT_REGISTRY, list_agents
@@ -1257,16 +1257,13 @@ async def connections_install(body: dict, _: None = Depends(_require_local)):
             raise HTTPException(
                 status_code=400, detail="`project_dir` is required when not global"
             )
-        # Restrict to the user's home directory to prevent writes to arbitrary paths.
-        resolved = validate_output_path(project_dir, base_dir=Path.home())
-        if resolved is None:
-            raise HTTPException(status_code=400, detail="Invalid project_dir")
-        if not resolved.exists() or not resolved.is_dir():
+        path_obj = Path(project_dir).expanduser()
+        if not path_obj.exists() or not path_obj.is_dir():
             raise HTTPException(
                 status_code=400,
                 detail=f"project_dir does not exist or is not a directory: {project_dir}",
             )
-        project_dir = str(resolved)
+        project_dir = str(path_obj.resolve())
 
     results = [install_agent(name, project_dir, is_global) for name in agents]
     return {"results": results}
@@ -1291,10 +1288,7 @@ async def connections_uninstall(body: dict, _: None = Depends(_require_local)):
             raise HTTPException(
                 status_code=400, detail="`project_dir` is required when not global"
             )
-        resolved = validate_output_path(project_dir, base_dir=Path.home())
-        if resolved is None:
-            raise HTTPException(status_code=400, detail="Invalid project_dir")
-        path_obj = resolved
+        path_obj = Path(project_dir).expanduser()
         if not path_obj.exists():
             # Stale registry entry — clean it up without touching disk.
             _config_manager.remove_connection(

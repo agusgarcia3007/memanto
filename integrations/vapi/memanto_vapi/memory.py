@@ -427,8 +427,8 @@ class VapiMemory:
 
         # Vapi's raw summary is written from the caller's transcript and can
         # name the caller or repeat their details. It never passes the shared
-        # extraction focus, so, as on main, it is kept only as caller-private
-        # memory; shared scope keeps only the filtered lessons above.
+        # extraction focus, so it is kept only as caller-private memory;
+        # shared scope keeps only the filtered lessons above.
         if tag and summary:
             items.append(
                 {

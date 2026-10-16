@@ -395,6 +395,14 @@ class DirectClient:
                 if renewed:
                     self._cached_session = renewed
                     self.session_token = renewed.session_token
+                else:
+                    try:
+                        self._cached_session = session_service.validate_session(
+                            self.session_token
+                        )
+                    except Exception:
+                        self._cached_session = None
+                        raise
                 return self._cached_session
             self._cached_session = None
 

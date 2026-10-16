@@ -7,16 +7,12 @@ Tests the session and agent services directly without HTTP layer.
 import errno
 import json
 import os
-import re
-import shutil
 import stat
-import subprocess
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from html.parser import HTMLParser
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -2206,7 +2202,6 @@ class TestMEMANTOArchitecture:
 
 def test_conflict_report_handles_non_object_json_items(tmp_path, monkeypatch):
     """Malformed agent conflict payloads should degrade to an empty report."""
-    import json
     from unittest.mock import MagicMock
 
     from memanto.app.services import daily_analysis_service as module

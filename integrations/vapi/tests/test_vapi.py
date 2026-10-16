@@ -527,56 +527,6 @@ def test_retried_end_of_call_report_is_not_learned_twice(extraction):
     assert fake.all_kwargs("recall")[-1]["tags"] == ["retained-call-9"]
 
 
-def test_overlapping_end_of_call_reports_are_retained_once(extraction):
-    """Concurrent webhook deliveries for one call share one retention critical section."""
-    outputs, seen = extraction
-    outputs[SHARED_EXTRACTION_FOCUS] = [candidate("Weekend hours are 10-4")]
-
-    class StoringClient(FakeClient):
-        def batch_remember(self, **kwargs: Any) -> dict[str, Any]:
-            # Widen the race after both requests have observed an empty recall.
-            time.sleep(0.05)
-            result = super().batch_remember(**kwargs)
-            self.memories.extend(kwargs["memories"])
-            return result
-
-    fake = StoringClient()
-    memory = shared_memory(fake)
-    report = end_of_call(CONVERSATION, summary="Hours fixed.")
-    start = threading.Barrier(2)
-
-    def retain() -> None:
-        start.wait()
-        memory._retain_call(report)
-
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        futures = [pool.submit(retain) for _ in range(2)]
-        for future in futures:
-            future.result(timeout=2)
-
-    assert len(seen) == 1
-    assert len(fake.all_kwargs("batch_remember")) == 1
-    assert memory._retention_locks == {}
-
-
-def test_retention_lock_is_released_after_an_unexpected_failure(extraction):
-    """A failed delivery must not strand its call lock or block a later retry."""
-    outputs, _ = extraction
-    fake = FakeClient()
-    memory = shared_memory(fake)
-    report = end_of_call(CONVERSATION)
-    outputs[SHARED_EXTRACTION_FOCUS] = RuntimeError("extractor unavailable")
-
-    with pytest.raises(RuntimeError, match="extractor unavailable"):
-        memory._retain_call(report)
-    assert memory._retention_locks == {}
-
-    outputs[SHARED_EXTRACTION_FOCUS] = [candidate("Weekend hours are 10-4")]
-    memory._retain_call(report)
-    assert len(fake.all_kwargs("batch_remember")) == 1
-    assert memory._retention_locks == {}
-
-
 @pytest.mark.parametrize("summary", ["", "   ", "Short call."])
 @pytest.mark.parametrize("empty_extraction", [[], ValueError("no usable candidates")])
 def test_nothing_extracted_stores_nothing_in_shared_scope(

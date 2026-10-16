@@ -3089,6 +3089,7 @@ def test_ui_esc_html_behaviour_in_node():
         ["node", "-e", script],
         capture_output=True,
         text=True,
+        encoding="utf-8",
         check=True,
         timeout=10,
     ).stdout

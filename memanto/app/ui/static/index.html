@@ -3428,9 +3428,8 @@
         // Truncate
         function trunc(s, n = 120) { if (!s) return ''; return s.length > n ? s.substring(0, n) + '…' : s; }
 
-        // Escape HTML
-        // Quotes must be escaped too: results are interpolated into quoted
-        // attributes (title="..."), where serializing a text node leaves them raw.
+        // Escape HTML and attribute values.
+        // Quotes are escaped so results are safe for both text content and quoted attributes.
         function escHtml(s) {
             if (s == null) return '';
             return String(s)
@@ -3441,11 +3440,8 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // Escape a value for a double-quoted HTML attribute.
-        function attrEsc(s) {
-            if (s == null) return '';
-            return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
+        // Backward-compatible alias for escHtml
+        const attrEsc = escHtml;
 
         // Navigation
         document.querySelectorAll('.nav-item').forEach(btn => {

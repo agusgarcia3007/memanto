@@ -77,6 +77,8 @@ def _bounded_tags(tags: list[str]) -> tuple[list[str], list[str]]:
     so tags that are too long, fail ``TAG_PATTERN`` (e.g. contain a comma,
     since tags are stored comma-joined), or exceed the per-memory cap are
     returned as ``extra`` for the supporting-data footer instead of being altered.
+    Injection-shaped or ``#``-prefixed filter-token tags are discarded entirely:
+    the footer content feeds session summaries and daily-analysis prompts.
     """
     kept: list[str] = []
     extra: list[str] = []
@@ -85,12 +87,16 @@ def _bounded_tags(tags: list[str]) -> tuple[list[str], list[str]]:
         if not text or text in kept:
             continue
         if (
+            text.startswith("#")
+            or any(pattern.search(text) for pattern in _INJECTION_TAG_PATTERNS)
+        ):
+            # SECURITY (Memanto #1852): never persist injection-shaped or
+            # filter-token tags - not even in the supporting-data footer,
+            # whose content feeds session summaries and daily-analysis prompts.
+            continue
+        if (
             len(text) > _MAX_TAG_CHARS
             or not _TAG_RE.match(text)
-            or text.startswith("#")
-            or any(
-                pattern.search(text) for pattern in _INJECTION_TAG_PATTERNS
-            )
             or len(kept) >= _MAX_TAGS
         ):
             extra.append(text)
